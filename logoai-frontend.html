@@ -1471,7 +1471,7 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
 /* ════════════════════════════════════════════════════════════════
    API CONFIG — замени BASE_URL на реальный адрес бэкенда
    ════════════════════════════════════════════════════════════════ */
-const API_BASE = window.API_BASE || 'http://localhost:3000/api';
+const API_BASE = window.API_BASE || `${window.location.origin}/api`;
 const getToken = () => localStorage.getItem('logoai_token');
 const authHeaders = () => ({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` });
 
@@ -1500,8 +1500,9 @@ async function apiGet(path) {
   if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
   return res.json();
 }
-async function apiPost(path, body) {
-  const res = await fetch(API_BASE + path, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
+async function apiPost(path, body, noAuth = false) {
+  const headers = noAuth ? { 'Content-Type': 'application/json' } : authHeaders();
+  const res = await fetch(API_BASE + path, { method: 'POST', headers, body: JSON.stringify(body) });
   if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
   return res.json();
 }
@@ -1564,7 +1565,7 @@ function updateEditorCanvas(logo) {
 async function loadProjects() {
   try {
     projectsData = await apiGet('/projects').then(r => r.projects || []);
-    renderDashboard();
+    renderProjects();
     renderFavorites();
   } catch(e) { console.warn('Projects load failed:', e); projectsData = []; }
 }
@@ -1681,13 +1682,18 @@ async function pollGeneration(jobId){
 
       if(data.status==='done'){
         clearInterval(genTimer);
+        console.log('[POLL] Generation done, logos:', JSON.stringify(data.logos));
         setTimeout(()=>{
           document.getElementById('gen-state').style.display='none';
           document.getElementById('res-state').style.display='';
-          document.querySelectorAll('.res-card').forEach((c,i)=>{
-            c.style.animation='none';c.offsetHeight;c.style.animation='';
-          });
-          if(data.logos?.length)renderResults(data.logos);
+          console.log('[POLL] gen-state hidden, res-state shown');
+          console.log('[POLL] results-grid:', document.getElementById('results-grid'));
+          if(data.logos?.length){
+            renderResults(data.logos);
+            console.log('[POLL] renderResults called with', data.logos.length, 'logos');
+          } else {
+            console.log('[POLL] NO logos in response!');
+          }
         },420);
       }
       if(data.status==='failed'){
@@ -1971,14 +1977,13 @@ async function handleLogin() {
   const pass  = document.getElementById('pw')?.value;
   if (!email || !pass) { toast('Заполните все поля'); return; }
   try {
-    const data = await apiPost('/auth/login', { email, password: pass });
+    const data = await apiPost('/auth/login', { email, password: pass }, true);
     localStorage.setItem('logoai_token', data.token);
     window.currentUser = data.user;
     fillUserUI(window.currentUser);
     loadProjects();
     toast('Добро пожаловать, ' + data.user.name);
     show('dashboard');
-    renderProjects();
   } catch(e) {
     toast('Ошибка входа: ' + e.message);
     return;
@@ -2002,14 +2007,13 @@ async function handleRegister() {
   const pass  = document.getElementById('reg-pass')?.value;
   if (!email || !pass) { toast('Заполните email и пароль'); return; }
   try {
-    const data = await apiPost('/auth/register', { name, email, password: pass });
+    const data = await apiPost('/auth/register', { name, email, password: pass }, true);
     localStorage.setItem('logoai_token', data.token);
     window.currentUser = data.user;
     fillUserUI(window.currentUser);
     loadProjects();
     toast('Аккаунт создан!');
     show('dashboard');
-    renderProjects();
   } catch(e) {
     toast('Ошибка регистрации: ' + e.message);
     return;

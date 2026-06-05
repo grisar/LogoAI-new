@@ -88,6 +88,20 @@ generationQueue.process('*', async (job) => {
     job.progress(90);
     console.log(`[Job ${job.id}] Created ${generatedLogos.length} logos`);
 
+    if (generatedLogos.length === 0) {
+      await prisma.generationJob.update({
+        where: { id: job.id },
+        data: {
+          status: 'failed',
+          progress: 100,
+          errorMessage: 'Не удалось сгенерировать логотипы. Попробуйте позже.',
+          completedAt: new Date()
+        }
+      });
+      console.log(`[Job ${job.id}] Failed: 0 logos generated`);
+      return { logos: [] };
+    }
+
     const completedAt = new Date();
 
     await prisma.generationJob.update({

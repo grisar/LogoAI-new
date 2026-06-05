@@ -8,10 +8,10 @@ export class CloudflareService {
   }
 
   async generateLogo(prompt) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
+    try {
       const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: {
@@ -33,7 +33,7 @@ export class CloudflareService {
       }
 
       const data = await response.json();
-      console.log(`Cloudflare response: success=${data.success}, hasImage=${!!data.result?.image}`);
+      console.log(`Cloudflare response: success=${data.success}, hasImage=${!!data.result?.image}, imageSize=${data.result?.image?.length}`);
 
       if (!data.success || !data.result?.image) {
         throw new Error('Invalid response from Cloudflare API');
@@ -41,8 +41,9 @@ export class CloudflareService {
 
       return data.result.image;
     } catch (error) {
+      clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        console.error('Cloudflare API timeout after 60 seconds');
+        console.error('Cloudflare API timeout after 30 seconds');
         throw new Error('Cloudflare API timeout');
       }
       console.error('Cloudflare generation error:', error);
@@ -94,18 +95,21 @@ export class CloudflareService {
       prompts.push(variation);
     }
 
-    console.log('Starting Cloudflare API calls...');
-    const results = await Promise.allSettled(
-      prompts.map(p => this.generateLogo(p))
-    );
+    console.log('Starting Cloudflare API calls (sequential with timeout)...');
+    const results = [];
 
-    console.log(`Got ${results.length} results from Cloudflare`);
+    for (let i = 0; i < prompts.length; i++) {
+      try {
+        const image = await this.generateLogo(prompts[i]);
+        results.push({ success: true, data: image, error: null, prompt: prompts[i] });
+        console.log(`Variation ${i + 1}/${prompts.length} succeeded`);
+      } catch (err) {
+        console.error(`Variation ${i + 1}/${prompts.length} failed: ${err.message}`);
+        results.push({ success: false, data: null, error: err.message, prompt: prompts[i] });
+      }
+    }
 
-    return results.map((result, index) => ({
-      success: result.status === 'fulfilled',
-      data: result.status === 'fulfilled' ? result.value : null,
-      error: result.status === 'rejected' ? result.reason.message : null,
-      prompt: prompts[index]
-    }));
+    console.log(`Got ${results.filter(r => r.success).length}/${results.length} successful results`);
+    return results;
   }
 }
