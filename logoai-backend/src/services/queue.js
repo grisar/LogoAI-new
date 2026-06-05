@@ -19,7 +19,7 @@ const cloudflare = new CloudflareService();
 const storage = new StorageService();
 
 generationQueue.process('*', async (job) => {
-  console.log(`Processing job ${job.id} with name ${job.name}`);
+  console.log(`[Queue] Processing job ${job.id} with name ${job.name}`);
 
   const { userId, projectId, params } = job.data;
 
@@ -49,6 +49,7 @@ generationQueue.process('*', async (job) => {
 
       if (result.success) {
         console.log(`[Job ${job.id}] Processing variation ${i + 1}`);
+        
         const filename = await storage.generateFilename(`logo_${userId}_${projectId}_${i}`);
         console.log(`[Job ${job.id}] Generated filename: ${filename}`);
         
@@ -114,7 +115,7 @@ generationQueue.process('*', async (job) => {
 
     job.progress(100);
 
-    console.log(`Job ${job.id} completed successfully`);
+    console.log(`[Job ${job.id}] Completed successfully`);
     return { logos: generatedLogos };
   } catch (error) {
     console.error(`[Job ${job.id}] Generation job error:`, error);
@@ -132,15 +133,15 @@ generationQueue.process('*', async (job) => {
 });
 
 generationQueue.on('completed', (job) => {
-  console.log(`Generation job ${job.id} completed`);
+  console.log(`[Queue] Generation job ${job.id} completed`);
 });
 
 generationQueue.on('failed', (job, err) => {
-  console.error(`Generation job ${job?.id} failed:`, err.message);
+  console.error(`[Queue] Generation job ${job?.id} failed:`, err.message);
 });
 
 generationQueue.on('error', (error) => {
-  console.error('Queue error:', error);
+  console.error('[Queue] Queue error:', error);
 });
 
-console.log('Logo generation queue initialized with processor');
+console.log('[Queue] Logo generation queue initialized with processor');
