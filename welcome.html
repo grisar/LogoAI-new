@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LogoAI — Доступно по IP</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 600px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 2.5rem;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 1.1rem;
+    }
+    .info-box {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-left: 4px solid #667eea;
+    }
+    .info-box h3 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .info-box p {
+      color: #555;
+      margin-bottom: 8px;
+    }
+    .info-box code {
+      background: #e9ecef;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #c7254e;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .status.ok {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status.ok::before {
+      content: '✓';
+    }
+    .btn {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+    .test-accounts {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    .test-accounts h3 {
+      color: #856404;
+      margin-bottom: 15px;
+    }
+    .test-accounts ul {
+      list-style: none;
+    }
+    .test-accounts li {
+      color: #856404;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,193,7,0.3);
+    }
+    .test-accounts li:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 LogoAI</h1>
+    <p class="subtitle">AI-генератор логотипов на Cloudflare Workers AI</p>
+
+    <div class="status ok">Все сервисы работают</div>
+
+    <div class="info-box">
+      <h3>🌐 Доступ по IP-адресу ВМ</h3>
+      <p><strong>Frontend:</strong> <code>http://172.24.254.145:8080</code></p>
+      <p><strong>Backend API:</strong> <code>http://172.24.254.145:3000/api</code></p>
+    </div>
+
+    <div class="info-box">
+      <h3>📊 База данных</h3>
+      <p>✓ PostgreSQL запущен</p>
+      <p>✓ База данных <code>logoai</code> создана</p>
+      <p>✓ Заполнена тестовыми данными</p>
+      <p>✓ 3 пользователя, 5 проектов, 5 логотипов</p>
+    </div>
+
+    <div class="info-box">
+      <h3>🔧 Systemd сервисы</h3>
+      <p>✓ <code>logoai-backend</code> — backend (порт 3000)</p>
+      <p>✓ <code>logoai-frontend</code> — frontend (порт 8080)</p>
+      <p>✓ Автозапуск при загрузке системы</p>
+    </div>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="http://172.24.254.145:8080" class="btn">🚀 Открыть LogoAI</a>
+    </div>
+
+    <div class="test-accounts">
+      <h3>👤 Тестовые аккаунты</h3>
+      <ul>
+        <li><strong>Free:</strong> test@example.com / password123 (3 генерации/день)</li>
+        <li><strong>Basic:</strong> alex@example.com / password123 (30 генераций/день)</li>
+        <li><strong>Pro:</strong> maria@example.com / password123 (безлимит)</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
