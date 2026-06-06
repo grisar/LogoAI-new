@@ -166,50 +166,59 @@ export class CloudflareService {
       prompts.push(variation);
     }
 
-    console.log('Starting Cloudflare API calls (sequential with timeout)...');
+    const safeWords = [
+      { from: /technology/gi, to: 'tech' },
+      { from: /dark charcoal/gi, to: 'dark gray' },
+      { from: /industry/gi, to: 'sector' },
+    ];
+    const safeSuffixes = [
+      ', clean corporate logo, professional',
+      ', business brand mark, flat design',
+      ', simple icon, vector style',
+      ', modern company emblem, minimal',
+      ', safe for work, office style',
+      ', abstract symbol, geometric',
+    ];
+
+    const makeSafePrompt = (base, attempt) => {
+      let p = base;
+      for (const w of safeWords) p = p.replace(w.from, w.to);
+      p += safeSuffixes[attempt % safeSuffixes.length];
+      return p;
+    };
+
+    console.log('Starting Cloudflare API calls (retry until all succeed)...');
     const results = [];
-
     const overallCtrl = new AbortController();
-    const overallTimeout = setTimeout(() => overallCtrl.abort(), 150000);
+    const overallTimeout = setTimeout(() => overallCtrl.abort(), 180000);
+    const maxAttempts = 12;
+    let attempt = 0;
 
-    for (let i = 0; i < prompts.length; i++) {
-      if (overallCtrl.signal.aborted) {
-        console.error('Overall generation timeout, stopping remaining variations');
-        results.push({ success: false, data: null, error: 'Overall timeout', prompt: prompts[i] });
-        continue;
-      }
+    while (results.filter(r => r.success).length < count && attempt < maxAttempts && !overallCtrl.signal.aborted) {
+      const idx = results.length < count ? results.length : results.findIndex(r => !r.success);
+      if (idx === -1) break;
+      const isRetry = attempt >= count;
+      const prompt = isRetry ? makeSafePrompt(prompts[idx % prompts.length], attempt - count) : prompts[attempt];
+      attempt++;
+
       try {
-        const image = await this.generateLogo(prompts[i]);
-        results.push({ success: true, data: image, error: null, prompt: prompts[i] });
-        console.log(`Variation ${i + 1}/${prompts.length} succeeded`);
-      } catch (err) {
-        console.error(`Variation ${i + 1}/${prompts.length} failed: ${err.message}`);
-        const isNsfw = err.message && err.message.includes('NSFW');
-        const isTimeout = err.message && err.message.includes('timeout');
-        if (isNsfw || isTimeout) {
-          const safePrompt = prompts[i]
-            .replace(/technology/gi, 'tech')
-            .replace(/dark charcoal/gi, 'dark gray')
-            .replace(/industry/gi, 'sector')
-            + ', safe for work, corporate, business';
-          console.log(`Retrying variation ${i + 1} with safe prompt...`);
-          try {
-            const image = await this.generateLogo(safePrompt);
-            results.push({ success: true, data: image, error: null, prompt: safePrompt });
-            console.log(`Retry variation ${i + 1} succeeded`);
-          } catch (retryErr) {
-            console.error(`Retry variation ${i + 1} also failed: ${retryErr.message}`);
-            results.push({ success: false, data: null, error: retryErr.message, prompt: safePrompt });
-          }
+        const image = await this.generateLogo(prompt);
+        if (isRetry) {
+          const fi = results.findIndex(r => !r.success);
+          if (fi !== -1) results[fi] = { success: true, data: image, error: null, prompt };
         } else {
-          results.push({ success: false, data: null, error: err.message, prompt: prompts[i] });
+          results.push({ success: true, data: image, error: null, prompt });
         }
+        console.log(`Attempt ${attempt}: success (${results.filter(r => r.success).length}/${count})`);
+      } catch (err) {
+        if (!isRetry) results.push({ success: false, data: null, error: err.message, prompt });
+        console.error(`Attempt ${attempt}: failed - ${err.message} (${results.filter(r => r.success).length}/${count})`);
       }
     }
 
     clearTimeout(overallTimeout);
-
-    console.log(`Got ${results.filter(r => r.success).length}/${results.length} successful results`);
-    return results;
+    const successful = results.filter(r => r.success);
+    console.log(`Got ${successful.length} successful results after ${attempt} attempts`);
+    return successful;
   }
 }
