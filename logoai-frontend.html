@@ -1177,10 +1177,10 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
       </div>
       <div class="sb-space"></div>
       <div class="plan-widget">
-        <div class="plan-w-title">✦ Бесплатный план</div>
-        <div class="plan-w-sub">2 из 3 генераций использовано</div>
-        <div class="prog-track"><div class="prog-fill" style="width:67%"></div></div>
-        <button class="btn btn-violet btn-sm btn-block" style="margin-top:var(--s3)" onclick="show('tariffs')">Перейти на Базовый</button>
+        <div class="plan-w-title" id="sidebar-plan-title">✦ Бесплатный план</div>
+        <div class="plan-w-sub" id="sidebar-plan-sub">0 из 3 генераций использовано</div>
+        <div class="prog-track"><div class="prog-fill" id="sidebar-plan-bar" style="width:0%"></div></div>
+        <button class="btn btn-violet btn-sm btn-block" style="margin-top:var(--s3)" id="sidebar-plan-btn" onclick="show('tariffs')">Перейти на Базовый</button>
       </div>
       <div class="sb-user" onclick="show('profile')">
         <div class="avatar user-avatar">?</div>
@@ -1337,8 +1337,8 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:var(--s4)">
           <div>
             <span class="badge" style="background:rgba(255,255,255,.2);color:#fff;margin-bottom:var(--s3)">Текущий план</span>
-            <h3>Бесплатный</h3>
-            <p>Перейдите на платный тариф для безлимита генераций и SVG-экспорта</p>
+            <h3 id="sub-plan-name">Бесплатный</h3>
+            <p id="sub-plan-desc">Перейдите на платный тариф для безлимита генераций и SVG-экспорта</p>
           </div>
           <button class="btn btn-lime" onclick="show('tariffs')">Сменить тариф →</button>
         </div>
@@ -2106,19 +2106,41 @@ function filterProjects(q){
 function fillUserUI(user) {
   if (!user) return;
   const initial = (user.name || '?')[0].toUpperCase();
-  const planStr = user.plan + (user.genLimit ? ' · ' + (user.genUsed||0) + '/' + user.genLimit : '');
+  const planNames = { free: 'Бесплатный', basic: 'Базовый', pro: 'Про' };
+  const planName = planNames[user.plan] || 'Бесплатный';
+  const genUsed = user.genUsed || user.generationsUsed || 0;
+  const genLimit = user.genLimit || 3;
+  const planStr = planName + (genLimit < 999999 ? ' · ' + genUsed + '/' + genLimit : '');
   document.querySelectorAll('.user-avatar').forEach(el => el.textContent = initial);
   document.querySelectorAll('.user-name').forEach(el => el.textContent = user.name || user.email);
   document.querySelectorAll('.user-plan').forEach(el => el.textContent = planStr);
   const sg = document.getElementById('stat-gen-used');
   const sp = document.getElementById('stat-projects');
-  if (sg) sg.textContent = (user.genUsed||0) + '/' + (user.genLimit||3);
+  if (sg) sg.textContent = genUsed + '/' + genLimit;
   if (sp) sp.textContent = projectsData.length;
   const pni = document.getElementById('profile-name-input');
   if (pni) pni.value = user.name || '';
   const pei = document.getElementById('profile-email-input');
   if (pei) pei.value = user.email || '';
   document.querySelectorAll('.user-avatar-lg').forEach(el => el.textContent = initial);
+
+  const spt = document.getElementById('sidebar-plan-title');
+  if (spt) spt.textContent = '✦ ' + planName + ' план';
+  const sps = document.getElementById('sidebar-plan-sub');
+  if (sps) sps.textContent = genLimit < 999999 ? genUsed + ' из ' + genLimit + ' генераций использовано' : 'Безлимит генераций';
+  const spb = document.getElementById('sidebar-plan-bar');
+  if (spb) spb.style.width = genLimit < 999999 ? Math.min(100, Math.round(genUsed / genLimit * 100)) + '%' : '100%';
+  const spBtn = document.getElementById('sidebar-plan-btn');
+  if (spBtn && user.plan === 'pro') { spBtn.textContent = 'Управление тарифом'; }
+  else if (spBtn && user.plan === 'basic') { spBtn.textContent = 'Перейти на Про'; }
+
+  const subPn = document.getElementById('sub-plan-name');
+  if (subPn) subPn.textContent = planName;
+  const subPd = document.getElementById('sub-plan-desc');
+  if (subPd) {
+    const descs = { free: 'Перейдите на платный тариф для безлимита генераций и SVG-экспорта', basic: '30 генераций в месяц, PNG/JPG/SVG экспорт', pro: 'Безлимит генераций, все форматы, приоритетная поддержка' };
+    subPd.textContent = descs[user.plan] || descs.free;
+  }
 
   const authBtns = document.getElementById('header-auth-buttons');
   const userInfo = document.getElementById('header-user-info');
