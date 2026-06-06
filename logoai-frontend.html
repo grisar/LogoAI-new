@@ -534,11 +534,10 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
           <button class="btn btn-ghost" onclick="show('auth')">Войти</button>
           <button class="btn btn-violet" onclick="show('auth')">Начать бесплатно</button>
         </div>
-        <div id="header-user-info" style="display: none;">
-          <span class="user-name"></span>
-          <button class="btn btn-ghost" onclick="show('profile')">Профиль</button>
-          <button class="btn btn-ghost" onclick="handleLogout()">Выйти</button>
-        </div>
+         <div id="header-user-info" style="display: none; align-items: center; gap: var(--s3);">
+           <button class="btn btn-ghost" onclick="show('dashboard')" style="font-weight:600;cursor:pointer;padding:var(--s2) var(--s3);"><span class="user-name"></span></button>
+           <button class="btn btn-ghost" onclick="handleLogout()">Выйти</button>
+         </div>
       </div>
     </div>
   </div>
