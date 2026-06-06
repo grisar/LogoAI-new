@@ -1602,7 +1602,7 @@ function updateEditorCanvas(logo) {
 
 async function loadProjects() {
   try {
-    projectsData = await apiGet('/projects').then(r => r.projects || []);
+    projectsData = await apiGet('/projects').then(r => (r.projects || []).map(p => ({...p, fav: p.isFavorite || false})));
     renderProjects();
     renderFavorites();
   } catch(e) { console.warn('Projects load failed:', e); projectsData = []; }
@@ -2246,13 +2246,14 @@ function toggleFav(id){
   const p=projectsData.find(x=>x.id===id);
   if(!p)return;
   p.fav=!p.fav;
-  // обновляем счётчики в сайдбаре
+  apiPut(`/projects/${id}`,{isFavorite:p.fav}).catch(()=>{});
   document.querySelectorAll('[data-nav="favorites"] .count, .nav-it .count').forEach(c=>{
     if(c.parentElement.textContent.includes('Избранное')){
       c.textContent=projectsData.filter(x=>x.fav).length;
     }
   });
   renderProjects();
+  renderFavorites();
   toast(p.fav?'Добавлено в избранное':'Убрано из избранного');
 }
 
@@ -2303,7 +2304,7 @@ function renderFavorites(){
         <button class="proj-fav on" onclick="event.stopPropagation();toggleFav('${p.id}')" aria-label="Убрать из избранного">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </button>
-        <svg viewBox="0 0 80 80" fill="none" width="70%">${p.svg}</svg>
+        ${p.thumbnailUrl?`<img src="${p.thumbnailUrl}" alt="${p.name}" style="max-width:70%;max-height:70%;object-fit:contain;border-radius:8px">`:`<svg viewBox="0 0 80 80" fill="none" width="70%"><circle cx="40" cy="40" r="30" stroke="#C68DFF" stroke-width="3"/><text x="40" y="48" text-anchor="middle" font-size="20" fill="#C68DFF" font-weight="700">?</text></svg>`}
       </div>
       <div class="proj-meta">
         <div class="proj-name">${p.name}</div>
