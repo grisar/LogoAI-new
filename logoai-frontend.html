@@ -1524,9 +1524,19 @@ async function apiDelete(path) {
 async function loadGallery() {
   try {
     const data = await apiGet('/logos/public?limit=8');
+    if (!data.logos?.length) return;
     const grid = document.getElementById('gallery-grid');
     if (!grid) return;
-    grid.innerHTML = data.logos.map(logo => `
+    const validLogos = [];
+    for (const logo of data.logos) {
+      if (!logo.thumbnailUrl) continue;
+      try {
+        const r = await fetch(logo.thumbnailUrl, { method: 'HEAD' });
+        if (r.ok) validLogos.push(logo);
+      } catch {}
+    }
+    if (!validLogos.length) return;
+    grid.innerHTML = validLogos.map(logo => `
       <div class="gallery-item" onclick="show('gen')">
         <img src="${logo.thumbnailUrl}" alt="${logo.brandName}" width="200" height="200" loading="lazy">
         <div class="gi-foot"><span>${logo.brandName}</span><span>${logo.style}</span></div>
