@@ -184,7 +184,26 @@ export class CloudflareService {
         console.log(`Variation ${i + 1}/${prompts.length} succeeded`);
       } catch (err) {
         console.error(`Variation ${i + 1}/${prompts.length} failed: ${err.message}`);
-        results.push({ success: false, data: null, error: err.message, prompt: prompts[i] });
+        const isNsfw = err.message && err.message.includes('NSFW');
+        const isTimeout = err.message && err.message.includes('timeout');
+        if (isNsfw || isTimeout) {
+          const safePrompt = prompts[i]
+            .replace(/technology/gi, 'tech')
+            .replace(/dark charcoal/gi, 'dark gray')
+            .replace(/industry/gi, 'sector')
+            + ', safe for work, corporate, business';
+          console.log(`Retrying variation ${i + 1} with safe prompt...`);
+          try {
+            const image = await this.generateLogo(safePrompt);
+            results.push({ success: true, data: image, error: null, prompt: safePrompt });
+            console.log(`Retry variation ${i + 1} succeeded`);
+          } catch (retryErr) {
+            console.error(`Retry variation ${i + 1} also failed: ${retryErr.message}`);
+            results.push({ success: false, data: null, error: retryErr.message, prompt: safePrompt });
+          }
+        } else {
+          results.push({ success: false, data: null, error: err.message, prompt: prompts[i] });
+        }
       }
     }
 
