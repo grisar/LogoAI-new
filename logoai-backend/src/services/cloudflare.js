@@ -43,7 +43,7 @@ export class CloudflareService {
 
   async generateLogo(prompt) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
 
     try {
       const response = await fetch(this.baseUrl, {
@@ -77,7 +77,7 @@ export class CloudflareService {
     } catch (error) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        console.error('Cloudflare API timeout after 30 seconds');
+        console.error('Cloudflare API timeout after 90 seconds');
         throw new Error('Cloudflare API timeout');
       }
       console.error('Cloudflare generation error:', error);
@@ -187,38 +187,53 @@ export class CloudflareService {
       return p;
     };
 
-    console.log('Starting Cloudflare API calls (retry until all succeed)...');
-    const results = [];
+    console.log('Starting Cloudflare API calls (parallel + retry)...');
+
     const overallCtrl = new AbortController();
     const overallTimeout = setTimeout(() => overallCtrl.abort(), 180000);
-    const maxAttempts = 12;
-    let attempt = 0;
 
-    while (results.filter(r => r.success).length < count && attempt < maxAttempts && !overallCtrl.signal.aborted) {
-      const idx = results.length < count ? results.length : results.findIndex(r => !r.success);
-      if (idx === -1) break;
-      const isRetry = attempt >= count;
-      const prompt = isRetry ? makeSafePrompt(prompts[idx % prompts.length], attempt - count) : prompts[attempt];
-      attempt++;
+    const results = await Promise.allSettled(
+      prompts.map((prompt, i) => this.generateLogo(prompt))
+    );
 
-      try {
-        const image = await this.generateLogo(prompt);
-        if (isRetry) {
-          const fi = results.findIndex(r => !r.success);
-          if (fi !== -1) results[fi] = { success: true, data: image, error: null, prompt };
-        } else {
-          results.push({ success: true, data: image, error: null, prompt });
-        }
-        console.log(`Attempt ${attempt}: success (${results.filter(r => r.success).length}/${count})`);
-      } catch (err) {
-        if (!isRetry) results.push({ success: false, data: null, error: err.message, prompt });
-        console.error(`Attempt ${attempt}: failed - ${err.message} (${results.filter(r => r.success).length}/${count})`);
+    const images = [];
+    const failedIndices = [];
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') {
+        images.push({ success: true, data: r.value, index: i });
+        console.log(`Initial ${i + 1}: success (${images.filter(x => x.success).length}/${count})`);
+      } else {
+        failedIndices.push(i);
+        console.error(`Initial ${i + 1}: failed - ${r.reason?.message}`);
       }
+    });
+
+    let retryRound = 0;
+    while (images.filter(x => x.success).length < count && failedIndices.length > 0 && retryRound < 4 && !overallCtrl.signal.aborted) {
+      const retryPromises = failedIndices.map(idx => {
+        const prompt = makeSafePrompt(prompts[idx], retryRound);
+        return this.generateLogo(prompt).then(img => ({ img, idx })).catch(() => null);
+      });
+      const retryResults = await Promise.allSettled(retryPromises);
+      const stillFailed = [];
+      retryResults.forEach((r, ri) => {
+        const origIdx = failedIndices[ri];
+        if (r.status === 'fulfilled' && r.value?.img) {
+          images.push({ success: true, data: r.value.img, index: origIdx });
+          console.log(`Retry ${retryRound + 1}/${origIdx + 1}: success (${images.filter(x => x.success).length}/${count})`);
+        } else {
+          stillFailed.push(origIdx);
+          console.error(`Retry ${retryRound + 1}/${origIdx + 1}: failed`);
+        }
+      });
+      failedIndices.length = 0;
+      failedIndices.push(...stillFailed);
+      retryRound++;
     }
 
     clearTimeout(overallTimeout);
-    const successful = results.filter(r => r.success);
-    console.log(`Got ${successful.length} successful results after ${attempt} attempts`);
+    const successful = images.filter(r => r.success);
+    console.log(`Got ${successful.length} successful results`);
     return successful;
   }
 }
