@@ -26,7 +26,10 @@ router.post('/register', async (req, res) => {
       select: { id: true, name: true, email: true, plan: true, generationsUsed: true, createdAt: true }
     });
 
-    const token = generateToken(user);
+    const token = generateToken({
+      userId: user.id,
+      email: user.email
+    });
 
     res.status(201).json({
       token,
