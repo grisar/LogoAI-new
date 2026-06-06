@@ -43,7 +43,11 @@ export class CloudflareService {
 
   async generateLogo(prompt) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    const timeoutMs = 45000;
+    const timeoutId = setTimeout(() => {
+      console.error('Cloudflare API timeout');
+      controller.abort();
+    }, timeoutMs);
 
     try {
       const response = await fetch(this.baseUrl, {
@@ -70,13 +74,7 @@ export class CloudflareService {
         throw new Error(`Cloudflare API error: ${response.status} - ${errorText}`);
       }
 
-      const data = await Promise.race([
-        response.json(),
-        new Promise((_, reject) => setTimeout(() => {
-          controller.abort();
-          reject(new Error('Cloudflare API timeout'));
-        }, 30000))
-      ]);
+      const data = await response.json();
       clearTimeout(timeoutId);
       console.log(`Cloudflare response: success=${data.success}, hasImage=${!!data.result?.image}, imageSize=${data.result?.image?.length}`);
 
@@ -88,10 +86,8 @@ export class CloudflareService {
     } catch (error) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        console.error('Cloudflare API timeout');
         throw new Error('Cloudflare API timeout');
       }
-      console.error('Cloudflare generation error:', error);
       throw error;
     }
   }
@@ -203,8 +199,19 @@ export class CloudflareService {
     const overallCtrl = new AbortController();
     const overallTimeout = setTimeout(() => overallCtrl.abort(), 180000);
 
-    const results = await Promise.allSettled(
-      prompts.map((prompt, i) => this.generateLogo(prompt))
+    const batchPromises = async (tasks, batchSize) => {
+      const out = [];
+      for (let i = 0; i < tasks.length; i += batchSize) {
+        const batch = tasks.slice(i, i + batchSize);
+        const res = await Promise.allSettled(batch);
+        out.push(...res);
+      }
+      return out;
+    };
+
+    const results = await batchPromises(
+      prompts.map((prompt, i) => this.generateLogo(prompt)),
+      2
     );
 
     const images = [];
