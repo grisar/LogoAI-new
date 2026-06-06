@@ -1710,8 +1710,16 @@ async function pollGeneration(jobId){
   const msgs=['FLUX.1 обрабатывает запрос…','GAN-модель строит структуру…','Финализация вариантов…','Готово, рендерим…'];
 
   clearInterval(genTimer);
+  const pollStart=Date.now();
+  const POLL_TIMEOUT=180000;
   genTimer=setInterval(async()=>{
     try{
+      if(Date.now()-pollStart>POLL_TIMEOUT){
+        clearInterval(genTimer);
+        msg.textContent='Превышено время генерации (3 мин)';
+        toast('Генерация заняла слишком долго, попробуйте снова');
+        return;
+      }
       const data=await apiGet(`/logos/generate/${jobId}/status`);
       const progress=data.progress||0;
       fill.style.width=progress+'%';

@@ -56,17 +56,17 @@ export class CloudflareService {
         signal: controller.signal
       });
 
-      clearTimeout(timeoutId);
-
       console.log(`Cloudflare response status: ${response.status}`);
 
       if (!response.ok) {
+        clearTimeout(timeoutId);
         const errorText = await response.text();
         console.error(`Cloudflare error response: ${errorText}`);
         throw new Error(`Cloudflare API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      clearTimeout(timeoutId);
       console.log(`Cloudflare response: success=${data.success}, hasImage=${!!data.result?.image}, imageSize=${data.result?.image?.length}`);
 
       if (!data.success || !data.result?.image) {
@@ -169,7 +169,15 @@ export class CloudflareService {
     console.log('Starting Cloudflare API calls (sequential with timeout)...');
     const results = [];
 
+    const overallCtrl = new AbortController();
+    const overallTimeout = setTimeout(() => overallCtrl.abort(), 150000);
+
     for (let i = 0; i < prompts.length; i++) {
+      if (overallCtrl.signal.aborted) {
+        console.error('Overall generation timeout, stopping remaining variations');
+        results.push({ success: false, data: null, error: 'Overall timeout', prompt: prompts[i] });
+        continue;
+      }
       try {
         const image = await this.generateLogo(prompts[i]);
         results.push({ success: true, data: image, error: null, prompt: prompts[i] });
@@ -179,6 +187,8 @@ export class CloudflareService {
         results.push({ success: false, data: null, error: err.message, prompt: prompts[i] });
       }
     }
+
+    clearTimeout(overallTimeout);
 
     console.log(`Got ${results.filter(r => r.success).length}/${results.length} successful results`);
     return results;
