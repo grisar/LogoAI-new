@@ -2058,14 +2058,14 @@ function renderProjects(){
         <button class="proj-fav ${p.fav?'on':''}" onclick="event.stopPropagation();toggleFav('${p.id}')" aria-label="Избранное">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </button>
-        <svg viewBox="0 0 80 80" fill="none" width="70%">${p.svg}</svg>
+        ${p.thumbnailUrl?`<img src="${p.thumbnailUrl}" alt="${p.name}" style="max-width:70%;max-height:70%;object-fit:contain;border-radius:8px">`:`<svg viewBox="0 0 80 80" fill="none" width="70%"><circle cx="40" cy="40" r="30" stroke="#C68DFF" stroke-width="3"/><text x="40" y="48" text-anchor="middle" font-size="20" fill="#C68DFF" font-weight="700">?</text></svg>`}
       </div>
       <div class="proj-meta">
         <div class="proj-name">${p.name}</div>
         <div class="proj-date">${p.date}</div>
         <div class="proj-acts">
           <span class="badge ${p.status==='done'?'badge-ok':'badge-draft'}">${p.status==='done'?'Готов':'Черновик'}</span>
-          <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openProject('${p.id}','${p.status}')">${p.status==='done'?'Скачать':'Открыть'}</button>
+          <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openProject('${p.id}','${p.status}')">Открыть</button>
         </div>
       </div>
     </div>
@@ -2082,13 +2082,15 @@ function renderProjects(){
 function openProject(id,status){
   const p=projectsData.find(x=>x.id===id);
   if(!p)return;
-  if(status==='draft'){
-    toast('Открываем черновик "'+p.name+'" в редакторе');
-    setTimeout(()=>show('editor'),250);
-  }else{
-    toast('Открываем "'+p.name+'" для скачивания');
-    setTimeout(()=>show('export'),250);
+  if(p.logos && p.logos.length){
+    window._genLogos = p.logos;
+    window.currentLogo = p.logos[0];
+    window._lastGenIndustry = p.logos[0]?.industry || '';
+    window._lastGenStyle = p.logos[0]?.style || '';
+    updateEditorCanvas(p.logos[0]);
+    renderResults(p.logos);
   }
+  show('editor');
 }
 
 function toggleFav(id){

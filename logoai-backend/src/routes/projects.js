@@ -28,8 +28,14 @@ router.get('/', authMiddleware, async (req, res) => {
       isFavorite: p.isFavorite,
       thumbnailUrl: p.thumbnailUrl || p.logos[0]?.thumbnailUrl,
       bg: '#f4f4f6',
-      svg: '<svg viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="30" stroke="#C68DFF" stroke-width="3"/><text x="40" y="48" text-anchor="middle" font-size="20" fill="#C68DFF" font-weight="700">L</text></svg>',
-      date: p.createdAt.toLocaleDateString('ru-RU')
+      date: p.createdAt.toLocaleDateString('ru-RU'),
+      logos: p.logos.map(l => ({
+        id: l.id,
+        thumbnailUrl: l.thumbnailUrl,
+        brandName: l.brandName,
+        industry: l.industry,
+        style: l.style
+      }))
     }));
 
     res.json({ projects: result, total });
