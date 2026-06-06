@@ -145,7 +145,15 @@ export class CloudflareService {
   async generateVariations(params, count = 4) {
     console.log(`Generating ${count} variations for: ${params.brandName}`);
 
-    const userPrompt = await this.translateToEnglish(params.prompt || '');
+    let userPrompt = params.prompt || '';
+    if (userPrompt && params.brandName) {
+      const placeholder = '___BRANDNAME___';
+      const safePrompt = userPrompt.split(params.brandName).join(placeholder);
+      const translated = await this.translateToEnglish(safePrompt);
+      userPrompt = translated.split(placeholder).join(params.brandName);
+    } else {
+      userPrompt = await this.translateToEnglish(userPrompt);
+    }
 
     const prompts = [];
 
