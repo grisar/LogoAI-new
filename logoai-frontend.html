@@ -1662,12 +1662,12 @@ async function startGen(){
   const brandName=document.getElementById('bname')?.value?.trim();
   if(!brandName){toast('Введите название бренда');gstep(1);return}
 
-  const industry=(document.querySelector('#ws1 .chip.on')?.textContent||'').trim();
-  const style=(document.querySelector('#ws2 .chip.on')?.textContent||'').trim();
+  const industry=(document.querySelector('#ws1 .chip.on')?.textContent||'').trim()||'Другое';
+  const style=(document.querySelector('#ws2 .chip.on')?.textContent||'').trim()||'Современный';
   const colorEl=document.querySelector('#ws2 .sw.on');
   const bgStyle=colorEl?.getAttribute('style')||'';
   const colorMatch=bgStyle.match(/#[0-9a-fA-F]{3,8}/);
-  const colors=colorMatch?[colorMatch[0]]:[];
+  const colors=colorMatch?[colorMatch[0]]:['#323843'];
   const prompt=document.querySelector('.pro-prompt-box textarea')?.value?.trim()||'';
 
   show('results');
