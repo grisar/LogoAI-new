@@ -1628,7 +1628,7 @@ function show(v){
   const t=document.getElementById('v-'+v);
   if(t){t.classList.add('active');window.scrollTo({top:0,behavior:'smooth'});}
   document.querySelectorAll('[data-nav]').forEach(el=>{el.classList.toggle('cur',el.dataset.nav===v)});
-  if(v==='dashboard')renderProjects();
+  if(v==='dashboard')loadProjects();
   if(v==='favorites')renderFavorites();
   if(v==='editor'&&window.currentLogo) updateEditorCanvas(window.currentLogo);
   if(v==='export'&&window.currentLogo) updateExportPreview();
@@ -2368,6 +2368,7 @@ async function handleLogin() {
 async function handleLogout() {
   localStorage.removeItem('logoai_token');
   window.currentUser = null;
+  projectsData = [];
   const authBtns = document.getElementById('header-auth-buttons');
   const userInfo = document.getElementById('header-user-info');
   if (authBtns) authBtns.style.display = 'flex';
