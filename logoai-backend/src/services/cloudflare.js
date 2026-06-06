@@ -43,7 +43,7 @@ export class CloudflareService {
 
   async generateLogo(prompt) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 90000);
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     try {
       const response = await fetch(this.baseUrl, {
@@ -70,7 +70,13 @@ export class CloudflareService {
         throw new Error(`Cloudflare API error: ${response.status} - ${errorText}`);
       }
 
-      const data = await response.json();
+      const data = await Promise.race([
+        response.json(),
+        new Promise((_, reject) => setTimeout(() => {
+          controller.abort();
+          reject(new Error('Cloudflare API timeout'));
+        }, 30000))
+      ]);
       clearTimeout(timeoutId);
       console.log(`Cloudflare response: success=${data.success}, hasImage=${!!data.result?.image}, imageSize=${data.result?.image?.length}`);
 
@@ -82,7 +88,7 @@ export class CloudflareService {
     } catch (error) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        console.error('Cloudflare API timeout after 90 seconds');
+        console.error('Cloudflare API timeout');
         throw new Error('Cloudflare API timeout');
       }
       console.error('Cloudflare generation error:', error);
