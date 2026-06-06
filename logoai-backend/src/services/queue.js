@@ -24,6 +24,12 @@ generationQueue.process('*', async (job) => {
   const { userId, projectId, params } = job.data;
 
   try {
+    const existingJob = await prisma.generationJob.findUnique({ where: { id: job.id } });
+    if (!existingJob) {
+      console.log(`[Job ${job.id}] No GenerationJob record found, skipping stale job`);
+      return { logos: [] };
+    }
+
     console.log(`[Job ${job.id}] Starting generation for user ${userId}, project ${projectId}`);
     job.progress(10);
 
