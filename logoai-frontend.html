@@ -1383,7 +1383,8 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
 <!-- ═══ TARIFFS PAGE ═══ -->
 <div id="v-tariffs" class="view">
   <div class="db-main" style="padding:var(--s10) var(--s10);max-width:1200px;margin:0 auto">
-    <div style="text-align:center;margin-bottom:var(--s12)">
+    <div style="text-align:center;margin-bottom:var(--s12);position:relative">
+      <button onclick="show('dashboard')" style="position:absolute;top:0;right:0;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px" aria-label="Закрыть"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       <span class="sec-lbl">Тарифы</span>
       <h2 style="font-size:var(--2xl);margin-top:var(--s3);margin-bottom:var(--s4);font-weight:700">Выберите план, который вам подходит</h2>
       <p style="color:var(--muted);max-width:60ch;margin:0 auto">Платите ежемесячно. Отмена в любой момент. Переходите между тарифами в один клик.</p>
