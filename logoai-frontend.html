@@ -1725,6 +1725,7 @@ async function pollGeneration(jobId){
           if(data.logos?.length){
             renderResults(data.logos);
             console.log('[POLL] renderResults called with', data.logos.length, 'logos');
+            loadProjects();
           } else {
             console.log('[POLL] NO logos in response!');
           }
