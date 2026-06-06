@@ -424,6 +424,8 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
 .proj-fav:hover{background:var(--white);transform:scale(1.1)}
 .proj-fav.on{color:var(--error)}
 .proj-fav.on svg{fill:currentColor}
+.proj-del{position:absolute;top:var(--s3);left:var(--s3);width:32px;height:32px;border-radius:var(--r-full);background:rgba(255,255,255,.92);backdrop-filter:blur(8px);display:grid;place-items:center;color:var(--muted);transition:all var(--tr);z-index:2;border:none;cursor:pointer}
+.proj-del:hover{background:#fff0f3;color:var(--error);transform:scale(1.1)}
 .proj-meta{padding:var(--s4)}
 .proj-name{font-size:var(--sm);font-weight:600;margin-bottom:var(--s1);font-family:var(--font-d)}
 .proj-date{font-size:var(--xs);color:var(--faint)}
@@ -479,7 +481,7 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
 /* MODAL */
 .modal-bd{position:fixed;inset:0;background:rgba(50,56,67,.5);backdrop-filter:blur(4px);z-index:300;display:none;align-items:center;justify-content:center;padding:var(--s6);animation:fadeIn .25s ease}
 .modal-bd.on{display:flex}
-.modal{background:var(--surface);border-radius:var(--r-xl);max-width:480px;width:100%;padding:var(--s8);box-shadow:var(--shadow-lg);animation:popIn .35s cubic-bezier(.2,1.2,.4,1)}
+.modal{background:var(--surface);border-radius:var(--r-xl);max-width:480px;width:100%;padding:var(--s8);box-shadow:var(--shadow-lg);animation:popIn .35s cubic-bezier(.2,1.2,.4,1);position:relative}
 .modal h3{font-size:var(--lg);margin-bottom:var(--s3);font-weight:700}
 .modal p{font-size:var(--sm);color:var(--muted);margin-bottom:var(--s6)}
 .modal-acts{display:flex;gap:var(--s3);justify-content:flex-end;flex-wrap:wrap}
@@ -1289,7 +1291,7 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
         <h3 style="color:var(--error)">Опасная зона</h3>
         <div class="set-row">
           <div class="lbl">Удалить аккаунт</div>
-          <div class="ctl"><button class="btn btn-secondary btn-sm" style="color:var(--error);border-color:rgba(226,90,111,.3)" onclick="openModal()">Удалить</button></div>
+          <div class="ctl"><button class="btn btn-secondary btn-sm" style="color:var(--error);border-color:rgba(226,90,111,.3)" onclick="openModal({title:'Удалить аккаунт?',text:'Это действие нельзя отменить. Все ваши проекты, черновики и история будут безвозвратно удалены.',confirmText:'Удалить навсегда',onConfirm:()=>{closeModal();toast('Аккаунт удалён')}})">Удалить</button></div>
         </div>
       </div>
 
@@ -1455,11 +1457,14 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
 <!-- MODAL -->
 <div class="modal-bd" id="modal">
   <div class="modal">
-    <h3>Удалить аккаунт?</h3>
-    <p>Это действие нельзя отменить. Все ваши проекты, черновики и история будут безвозвратно удалены.</p>
+    <button onclick="closeModal()" style="position:absolute;top:var(--s4);right:var(--s4);background:none;border:none;cursor:pointer;color:var(--muted);padding:var(--s2);border-radius:var(--r-full);transition:all var(--tr)" onmouseover="this.style.background='var(--violet-25)';this.style.color='var(--ink)'" onmouseout="this.style.background='none';this.style.color='var(--muted)'">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <h3 id="modal-title">Удалить проект?</h3>
+    <p id="modal-text">Это действие нельзя отменить. Проект и все связанные логотипы будут безвозвратно удалены.</p>
     <div class="modal-acts">
       <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
-      <button class="btn" style="background:var(--error);color:#fff" onclick="closeModal();toast('Аккаунт удалён')">Удалить навсегда</button>
+      <button class="btn" id="modal-confirm" style="background:var(--error);color:#fff" onclick="confirmModalAction()">Удалить</button>
     </div>
   </div>
 </div>
@@ -1869,6 +1874,9 @@ function renderProjects(){
   grid.innerHTML=items.map((p,i)=>`
     <div class="proj-card" style="animation-delay:${i*40}ms" onclick="openProject('${p.id}','${p.status}')">
       <div class="proj-thumb" style="background:${p.bg}">
+        <button class="proj-del" onclick="event.stopPropagation();confirmDelete('${p.id}','${p.name.replace(/'/g,"\\'")}')" aria-label="Удалить">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        </button>
         <button class="proj-fav ${p.fav?'on':''}" onclick="event.stopPropagation();toggleFav('${p.id}')" aria-label="Избранное">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </button>
@@ -1919,6 +1927,29 @@ function toggleFav(id){
   toast(p.fav?'Добавлено в избранное':'Убрано из избранного');
 }
 
+/* DELETE PROJECT */
+function confirmDelete(id, name) {
+  openModal({
+    title: 'Удалить проект?',
+    text: `Проект "${name}" и все связанные логотипы будут безвозвратно удалены.`,
+    confirmText: 'Удалить',
+    onConfirm: () => deleteProject(id)
+  });
+}
+
+async function deleteProject(id) {
+  try {
+    await apiDelete('/projects/' + id);
+    projectsData = projectsData.filter(p => p.id !== id);
+    renderProjects();
+    renderFavorites();
+    toast('Проект удалён');
+  } catch (e) {
+    console.error('Delete error:', e);
+    toast('Ошибка удаления');
+  }
+}
+
 /* FAVORITES */
 function renderFavorites(){
   const grid=document.getElementById('fav-grid');
@@ -1937,6 +1968,9 @@ function renderFavorites(){
   grid.innerHTML=favs.map((p,i)=>`
     <div class="proj-card" style="animation-delay:${i*50}ms" onclick="openProject('${p.id}','${p.status}')">
       <div class="proj-thumb" style="background:${p.bg}">
+        <button class="proj-del" onclick="event.stopPropagation();confirmDelete('${p.id}','${p.name.replace(/'/g,"\\'")}')" aria-label="Удалить">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        </button>
         <button class="proj-fav on" onclick="event.stopPropagation();toggleFav('${p.id}')" aria-label="Убрать из избранного">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </button>
@@ -1955,8 +1989,24 @@ function renderFavorites(){
 }
 
 /* MODAL */
-function openModal(){document.getElementById('modal').classList.add('on')}
-function closeModal(){document.getElementById('modal').classList.remove('on')}
+function openModal(opts){
+  const m=document.getElementById('modal');
+  const t=document.getElementById('modal-title');
+  const p=document.getElementById('modal-text');
+  const c=document.getElementById('modal-confirm');
+  if(opts?.title)t.textContent=opts.title;
+  if(opts?.text)p.textContent=opts.text;
+  if(opts?.confirmText)c.textContent=opts.confirmText;
+  window._modalAction=opts?.onConfirm||null;
+  m.classList.add('on');
+}
+function closeModal(){document.getElementById('modal').classList.remove('on');window._modalAction=null}
+async function confirmModalAction(){
+  if(typeof window._modalAction==='function'){
+    await window._modalAction();
+  }
+  closeModal();
+}
 document.getElementById('modal')?.addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
 
 /* TOAST */

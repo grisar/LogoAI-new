@@ -5,6 +5,40 @@ export class CloudflareService {
     this.apiToken = process.env.CF_API_TOKEN;
     this.accountId = process.env.CF_ACCOUNT_ID;
     this.baseUrl = `https://api.cloudflare.com/client/v4/accounts/${this.accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`;
+
+    this.industryMap = {
+      'Технологии': 'technology',
+      'Дизайн': 'design',
+      'Медицина': 'healthcare',
+      'Еда и рестораны': 'food and restaurant',
+      'Образование': 'education',
+      'Финансы': 'finance',
+      'Спорт': 'sports',
+      'Другое': 'general'
+    };
+
+    this.styleMap = {
+      'Минималистичный': 'minimalist',
+      'Геометрический': 'geometric',
+      'Ретро / Vintage': 'retro vintage',
+      'Современный': 'modern',
+      'Рукописный': 'handwritten',
+      'Абстрактный': 'abstract'
+    };
+
+    this.colorMap = {
+      '#C68DFF': 'purple violet',
+      '#c68dff': 'purple violet',
+      '#CBE857': 'lime green yellow',
+      '#cbe857': 'lime green yellow',
+      '#323843': 'dark charcoal',
+      '#FFFFFF': 'white',
+      '#ffffff': 'white',
+      '#5BA84A': 'green',
+      '#5ba84a': 'green',
+      '#E25A6F': 'pink rose',
+      '#e25a6f': 'pink rose'
+    };
   }
 
   async generateLogo(prompt) {
@@ -54,22 +88,26 @@ export class CloudflareService {
   buildPrompt(params) {
     const { brandName, industry, style, colors, prompt } = params;
 
+    const indEn = this.industryMap[industry] || industry || '';
+    const styEn = this.styleMap[style] || style || '';
+
     let basePrompt = `Professional logo design`;
 
     if (brandName) {
       basePrompt += ` for brand "${brandName}"`;
     }
 
-    if (industry) {
-      basePrompt += ` in ${industry} industry`;
+    if (indEn) {
+      basePrompt += ` in ${indEn} industry`;
     }
 
-    if (style) {
-      basePrompt += `, ${style} style`;
+    if (styEn) {
+      basePrompt += `, ${styEn} style`;
     }
 
     if (colors && colors.length > 0) {
-      basePrompt += `, using colors ${colors.join(', ')}`;
+      const colorNames = colors.map(c => this.colorMap[c] || this.colorMap[c.toUpperCase()] || this.colorMap[c.toLowerCase()] || c);
+      basePrompt += `, using ${colorNames.join(' and ')} color palette`;
     }
 
     if (prompt) {
