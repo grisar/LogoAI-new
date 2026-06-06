@@ -1741,7 +1741,8 @@ async function pollGeneration(jobId){
             console.log('[POLL] renderResults called with', data.logos.length, 'logos');
             loadProjects();
           } else {
-            console.log('[POLL] NO logos in response!');
+            msg.textContent='Сервис генерации временно недоступен, попробуйте позже';
+            toast('Не удалось сгенерировать логотипы');
           }
         },420);
       }

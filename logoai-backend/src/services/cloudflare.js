@@ -62,6 +62,11 @@ export class CloudflareService {
         clearTimeout(timeoutId);
         const errorText = await response.text();
         console.error(`Cloudflare error response: ${errorText}`);
+        if (response.status === 429) {
+          const err = new Error('RATE_LIMIT');
+          err.rateLimited = true;
+          throw err;
+        }
         throw new Error(`Cloudflare API error: ${response.status} - ${errorText}`);
       }
 
@@ -198,34 +203,51 @@ export class CloudflareService {
 
     const images = [];
     const failedIndices = [];
+    let rateLimited = false;
     results.forEach((r, i) => {
       if (r.status === 'fulfilled') {
         images.push({ success: true, data: r.value, index: i });
         console.log(`Initial ${i + 1}: success (${images.filter(x => x.success).length}/${count})`);
       } else {
+        if (r.reason?.rateLimited) rateLimited = true;
         failedIndices.push(i);
         console.error(`Initial ${i + 1}: failed - ${r.reason?.message}`);
       }
     });
 
+    if (rateLimited) {
+      console.error('Rate limited by Cloudflare — skipping retries');
+      clearTimeout(overallTimeout);
+      const successful = images.filter(r => r.success);
+      console.log(`Got ${successful.length} successful results (rate limited)`);
+      return successful;
+    }
+
     let retryRound = 0;
     while (images.filter(x => x.success).length < count && failedIndices.length > 0 && retryRound < 4 && !overallCtrl.signal.aborted) {
       const retryPromises = failedIndices.map(idx => {
         const prompt = makeSafePrompt(prompts[idx], retryRound);
-        return this.generateLogo(prompt).then(img => ({ img, idx })).catch(() => null);
+        return this.generateLogo(prompt).then(img => ({ img, idx })).catch(e => e);
       });
       const retryResults = await Promise.allSettled(retryPromises);
       const stillFailed = [];
+      let hitRateLimit = false;
       retryResults.forEach((r, ri) => {
         const origIdx = failedIndices[ri];
         if (r.status === 'fulfilled' && r.value?.img) {
           images.push({ success: true, data: r.value.img, index: origIdx });
           console.log(`Retry ${retryRound + 1}/${origIdx + 1}: success (${images.filter(x => x.success).length}/${count})`);
         } else {
+          const err = r.status === 'rejected' ? r.reason : r.value;
+          if (err?.rateLimited) hitRateLimit = true;
           stillFailed.push(origIdx);
-          console.error(`Retry ${retryRound + 1}/${origIdx + 1}: failed`);
+          console.error(`Retry ${retryRound + 1}/${origIdx + 1}: failed - ${err?.message || 'unknown'}`);
         }
       });
+      if (hitRateLimit) {
+        console.error('Rate limited during retry — stopping');
+        break;
+      }
       failedIndices.length = 0;
       failedIndices.push(...stillFailed);
       retryRound++;
