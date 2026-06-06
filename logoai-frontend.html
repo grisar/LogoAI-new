@@ -355,7 +355,7 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
 .mini-prev.dark-bg{background:var(--ink)}
 .canvas-area{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);display:flex;align-items:center;justify-content:center;min-height:380px;margin-bottom:var(--s6);box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
 .canvas-area::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,var(--ink-10) 1px,transparent 1px);background-size:20px 20px;opacity:.4}
-.canvas-area svg{position:relative;z-index:1}
+.canvas-area svg,.canvas-area #ed-canvas{position:relative;z-index:1}
 .ed-toolbar{display:flex;flex-wrap:wrap;gap:var(--s6);margin-bottom:var(--s6);padding:var(--s5);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg)}
 .ed-tool-group{display:flex;flex-direction:column;gap:var(--s3)}
 .ed-tool-label{font-size:var(--xs);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -989,38 +989,50 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
   <div class="editor-shell">
     <div class="ed-main">
       <div class="pg-title">Редактор логотипа</div>
-      <div class="canvas-area">
-        <svg viewBox="0 0 200 200" fill="none" width="220" height="220" id="ed-canvas">
-          <circle cx="100" cy="100" r="70" stroke="#C68DFF" stroke-width="5"/>
-          <text x="100" y="115" text-anchor="middle" font-size="56" font-family="Unbounded,serif" fill="#C68DFF" font-weight="700">Ax</text>
-        </svg>
+      <div class="canvas-area" id="ed-canvas-wrap">
+        <div id="ed-canvas" style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px">
+          <img id="ed-logo-img" src="" alt="Logo" style="max-width:280px;max-height:280px;object-fit:contain;border-radius:12px;transition:filter .3s">
+          <div id="ed-brand-text" style="font-size:28px;font-weight:700;font-family:Unbounded,sans-serif;color:#323843;text-align:center;letter-spacing:1px"></div>
+          <div id="ed-slogan-text" style="font-size:16px;font-weight:400;font-family:Inter,sans-serif;color:#8A8A97;text-align:center;letter-spacing:2px;text-transform:uppercase"></div>
+        </div>
       </div>
       <div class="ed-toolbar">
         <div class="ed-tool-group">
-          <div class="ed-tool-label">Цвет элементов</div>
+          <div class="ed-tool-label">Цвет логотипа</div>
           <div class="swatches">
-            <div class="sw on" style="background:#C68DFF" onclick="selSw(this);edColor('#C68DFF')"></div>
-            <div class="sw" style="background:#CBE857" onclick="selSw(this);edColor('#CBE857')"></div>
-            <div class="sw" style="background:#323843" onclick="selSw(this);edColor('#323843')"></div>
-            <div class="sw" style="background:#5BA84A" onclick="selSw(this);edColor('#5BA84A')"></div>
-            <div class="sw" style="background:#E25A6F" onclick="selSw(this);edColor('#E25A6F')"></div>
+            <div class="sw on" style="background:#323843" onclick="edSetColor(this,'#323843')" title="Оригинал"></div>
+            <div class="sw" style="background:#C68DFF" onclick="edSetColor(this,'#C68DFF')" title="Фиолетовый"></div>
+            <div class="sw" style="background:#CBE857" onclick="edSetColor(this,'#CBE857')" title="Лайм"></div>
+            <div class="sw" style="background:#5BA84A" onclick="edSetColor(this,'#5BA84A')" title="Зелёный"></div>
+            <div class="sw" style="background:#E25A6F" onclick="edSetColor(this,'#E25A6F')" title="Розовый"></div>
+            <div class="sw" style="background:#FFFFFF;border:1px solid var(--border)" onclick="edSetColor(this,'#FFFFFF')" title="Белый"></div>
+          </div>
+        </div>
+        <div class="ed-tool-group">
+          <div class="ed-tool-label">Фон</div>
+          <div class="tag-row">
+            <span class="chip on" onclick="edSetBg(this,'#f4f4f6')">Светлый</span>
+            <span class="chip" onclick="edSetBg(this,'#1a1a2e')">Тёмный</span>
+            <span class="chip" onclick="edSetBg(this,'#FFFFFF')">Белый</span>
+            <span class="chip" onclick="edSetBg(this,'transparent')">Прозрачный</span>
           </div>
         </div>
         <div class="ed-tool-group">
           <div class="ed-tool-label">Шрифт</div>
-          <div class="tag-row">
-            <span class="chip on" onclick="togSingle(this)">Unbounded</span>
-            <span class="chip" onclick="togSingle(this)">Inter</span>
-            <span class="chip" onclick="togSingle(this)">Mono</span>
+          <div class="tag-row" id="ed-font-chips">
+            <span class="chip on" onclick="edSetFont(this,'Unbounded')">Unbounded</span>
+            <span class="chip" onclick="edSetFont(this,'Inter')">Inter</span>
+            <span class="chip" onclick="edSetFont(this,'monospace')">Mono</span>
+            <span class="chip" onclick="edSetFont(this,'serif')">Serif</span>
           </div>
         </div>
-        <div class="ed-tool-group">
-          <div class="ed-tool-label">Фон превью</div>
-          <div class="tag-row">
-            <span class="chip on" onclick="togSingle(this)">Светлый</span>
-            <span class="chip" onclick="togSingle(this)">Тёмный</span>
-            <span class="chip" onclick="togSingle(this)">Прозрачный</span>
-          </div>
+        <div class="ed-tool-group" style="flex:1;min-width:200px">
+          <div class="ed-tool-label">Название бренда</div>
+          <input type="text" id="ed-brand-input" placeholder="Название бренда" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--r-md);font-size:14px;background:var(--bg);color:var(--ink)" oninput="edUpdateBrand()">
+        </div>
+        <div class="ed-tool-group" style="flex:1;min-width:200px">
+          <div class="ed-tool-label">Слоган</div>
+          <input type="text" id="ed-slogan-input" placeholder="Введите слоган…" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--r-md);font-size:14px;background:var(--bg);color:var(--ink)" oninput="edUpdateSlogan()">
         </div>
       </div>
       <div class="btn-row">
@@ -1030,16 +1042,17 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
     </div>
     <aside class="ed-panel">
       <div class="pan-title">Предпросмотр</div>
-      <div class="mini-prev"><svg viewBox="0 0 100 100" fill="none" width="100%"><circle cx="50" cy="50" r="34" stroke="#C68DFF" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-size="26" font-family="Unbounded,serif" fill="#C68DFF" font-weight="700">Ax</text></svg></div>
-      <div class="mini-prev dark-bg"><svg viewBox="0 0 100 100" fill="none" width="100%"><circle cx="50" cy="50" r="34" stroke="#CBE857" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-size="26" font-family="Unbounded,serif" fill="#CBE857" font-weight="700">Ax</text></svg></div>
+      <div class="mini-prev" id="ed-prev-light"></div>
+      <div class="mini-prev dark-bg" id="ed-prev-dark"></div>
       <div class="pan-div"></div>
       <div>
         <div class="pan-title" style="margin-bottom:var(--s3)">Параметры</div>
         <div style="display:flex;flex-direction:column;gap:var(--s2);font-size:var(--sm)">
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Бренд</span><span><span id="result-brand-name"></span></span></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Ниша</span><span>Дизайн</span></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Стиль</span><span>Минималистичный</span></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Цвет</span><span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:#C68DFF;display:inline-block"></span>Фиолетовый</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Бренд</span><span id="ed-info-brand"></span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Ниша</span><span id="ed-info-industry"></span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Стиль</span><span id="ed-info-style"></span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Цвет</span><span id="ed-info-color" style="display:flex;align-items:center;gap:6px"></span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Слоган</span><span id="ed-info-slogan" style="text-align:right;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span></div>
         </div>
       </div>
       <div class="pan-div"></div>
@@ -1055,11 +1068,12 @@ input,select,textarea{font:inherit;color:inherit;background:none;border:none;out
 <div id="v-export" class="view">
   <div class="export-wrap">
     <div class="pg-title">Экспорт логотипа</div>
-    <div class="export-preview">
-      <svg viewBox="0 0 200 200" fill="none" width="200" height="200">
-        <circle cx="100" cy="100" r="70" stroke="#C68DFF" stroke-width="5"/>
-        <text x="100" y="115" text-anchor="middle" font-size="56" font-family="Unbounded,serif" fill="#C68DFF" font-weight="700">Ax</text>
-      </svg>
+    <div class="export-preview" id="export-preview-wrap">
+      <div id="export-preview-area" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px">
+        <img id="export-logo-img" src="" alt="Logo" style="max-width:280px;max-height:280px;object-fit:contain;border-radius:12px">
+        <div id="export-brand-text" style="font-size:28px;font-weight:700;font-family:Unbounded,sans-serif;color:#323843;text-align:center;letter-spacing:1px"></div>
+        <div id="export-slogan-text" style="font-size:16px;font-weight:400;font-family:Inter,sans-serif;color:#8A8A97;text-align:center;letter-spacing:2px;text-transform:uppercase"></div>
+      </div>
     </div>
     <div class="export-formats">
       <!-- PNG -->
@@ -1552,7 +1566,7 @@ function renderResults(logos) {
   const grid = document.getElementById('results-grid');
   if (!grid || !logos?.length) return;
   grid.innerHTML = logos.map((logo, i) => `
-    <div class="res-card${i===0?' on':''}" onclick="selRes(this)" data-logo-id="${logo.id}" data-logo-url="${logo.svgUrl}">
+    <div class="res-card${i===0?' on':''}" onclick="selRes(this,${i})" data-idx="${i}">
       <div class="res-thumb" style="background:${logo.bgColor||'#f4f4f6'}">
         <img src="${logo.thumbnailUrl}" alt="Вариант ${i+1}" width="100" height="100" loading="lazy">
       </div>
@@ -1561,19 +1575,26 @@ function renderResults(logos) {
         ${i===0?'<span class="badge badge-violet">Выбран</span>':''}
       </div>
     </div>`).join('');
-  // Pre-select first
+  window._genLogos = logos;
   window.currentLogo = logos[0];
   updateEditorCanvas(logos[0]);
 }
 
 function updateEditorCanvas(logo) {
   if (!logo) return;
-  const canvas = document.getElementById('ed-canvas');
-  if (canvas && logo.svgContent) canvas.innerHTML = logo.svgContent;
-  const preview = document.getElementById('export-preview-svg');
-  if (preview && logo.svgContent) preview.innerHTML = logo.svgContent;
-  const brandDisplay = document.getElementById('result-brand-name');
-  if (brandDisplay) brandDisplay.textContent = logo.brandName || '';
+  const img = document.getElementById('ed-logo-img');
+  if (img) img.src = logo.thumbnailUrl || '';
+
+  const brandInput = document.getElementById('ed-brand-input');
+  if (brandInput && !brandInput.value) brandInput.value = logo.brandName || '';
+
+  edUpdateBrand();
+  edUpdateSlogan();
+  updateEditorPreviews();
+  updateEditorInfo(logo);
+
+  const exportImg = document.getElementById('export-logo-img');
+  if (exportImg) exportImg.src = logo.thumbnailUrl || '';
 }
 
 async function loadProjects() {
@@ -1608,11 +1629,11 @@ function show(v){
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
   const t=document.getElementById('v-'+v);
   if(t){t.classList.add('active');window.scrollTo({top:0,behavior:'smooth'});}
-  // обновляем sidebar
   document.querySelectorAll('[data-nav]').forEach(el=>{el.classList.toggle('cur',el.dataset.nav===v)});
-  // ленивая отрисовка проектов
   if(v==='dashboard')renderProjects();
   if(v==='favorites')renderFavorites();
+  if(v==='editor'&&window.currentLogo) updateEditorCanvas(window.currentLogo);
+  if(v==='export'&&window.currentLogo) updateExportPreview();
 }
 function scrollToSec(id){
   show('landing');
@@ -1653,6 +1674,8 @@ async function startGen(){
   const pct=document.getElementById('prog-pct');
   const msg=document.getElementById('prog-msg');
   fill.style.width='0%';pct.textContent='0%';msg.textContent='Отправка запроса…';
+  window._lastGenIndustry = industry;
+  window._lastGenStyle = style;
 
   try{
     let projectId=null;
@@ -1723,12 +1746,16 @@ async function pollGeneration(jobId){
 }
 
 /* RESULT SELECTION */
-function selRes(el){
+function selRes(el, idx){
   document.querySelectorAll('.res-card').forEach(c=>{c.classList.remove('on');const b=c.querySelector('.badge');if(b)b.remove()});
   el.classList.add('on');
   const f=el.querySelector('.res-foot');
   const b=document.createElement('span');b.className='badge badge-violet';b.textContent='Выбран';
   f.appendChild(b);
+  if(window._genLogos && window._genLogos[idx]){
+    window.currentLogo = window._genLogos[idx];
+    updateEditorCanvas(window.currentLogo);
+  }
 }
 
 /* CHIP TOGGLES */
@@ -1744,17 +1771,168 @@ function selSw(el){
   el.classList.add('on');
 }
 
-/* EDITOR — смена цвета SVG */
-function edColor(c){
-  const canvas=document.getElementById('ed-canvas');
-  if(!canvas)return;
-  canvas.querySelectorAll('circle,text,rect,path,polygon,line').forEach(node=>{
-    if(node.getAttribute('stroke'))node.setAttribute('stroke',c);
-    if(node.getAttribute('fill')&&node.getAttribute('fill')!=='none')node.setAttribute('fill',c);
+/* EDITOR — state */
+let edState = {
+  color: '#323843',
+  bgColor: '#f4f4f6',
+  font: 'Unbounded',
+  brandText: '',
+  slogan: ''
+};
+
+/* EDITOR — set color (CSS filter tint on image) */
+function edSetColor(sw, c){
+  sw.closest('.swatches').querySelectorAll('.sw').forEach(s=>s.classList.remove('on'));
+  sw.classList.add('on');
+  edState.color = c;
+  applyEditorColor();
+  updateEditorPreviews();
+  updateEditorInfo();
+}
+
+function applyEditorColor(){
+  const img = document.getElementById('ed-logo-img');
+  if(!img) return;
+  if(edState.color === '#323843' || edState.color === '#1a1a2e'){
+    img.style.filter = 'none';
+  } else {
+    img.style.filter = `sepia(1) saturate(3) hue-rotate(${hexToHue(edState.color)}deg)`;
+  }
+  const brandEl = document.getElementById('ed-brand-text');
+  if(brandEl) brandEl.style.color = edState.color;
+  const sloganEl = document.getElementById('ed-slogan-text');
+  if(sloganEl) sloganEl.style.color = edState.color + '99';
+}
+
+function hexToHue(hex){
+  const r = parseInt(hex.slice(1,3),16)/255;
+  const g = parseInt(hex.slice(3,5),16)/255;
+  const b = parseInt(hex.slice(5,7),16)/255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h = 0;
+  if(max !== min){
+    const d = max - min;
+    if(max === r) h = ((g-b)/d + (g<b?6:0))/6;
+    else if(max === g) h = ((b-r)/d + 2)/6;
+    else h = ((r-g)/d + 4)/6;
+  }
+  return Math.round(h * 360);
+}
+
+/* EDITOR — set background */
+function edSetBg(chip, bg){
+  chip.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  chip.classList.add('on');
+  edState.bgColor = bg;
+  const wrap = document.getElementById('ed-canvas-wrap');
+  if(!wrap) return;
+  const canvas = document.getElementById('ed-canvas');
+  if(!canvas) return;
+  if(bg === 'transparent'){
+    canvas.style.background = 'repeating-conic-gradient(#e0e0e0 0% 25%, #fff 0% 50%) 50%/16px 16px';
+  } else {
+    canvas.style.background = bg;
+  }
+  const isDark = bg === '#1a1a2e';
+  canvas.style.borderRadius = '12px';
+  const brandEl = document.getElementById('ed-brand-text');
+  if(brandEl && edState.color === '#323843'){
+    brandEl.style.color = isDark ? '#ffffff' : '#323843';
+  }
+  updateEditorPreviews();
+}
+
+/* EDITOR — set font */
+function edSetFont(chip, font){
+  chip.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  chip.classList.add('on');
+  edState.font = font;
+  const brandEl = document.getElementById('ed-brand-text');
+  if(brandEl) brandEl.style.fontFamily = font + ',sans-serif';
+  const sloganEl = document.getElementById('ed-slogan-text');
+  if(sloganEl) sloganEl.style.fontFamily = font + ',sans-serif';
+  updateEditorPreviews();
+}
+
+/* EDITOR — update brand text */
+function edUpdateBrand(){
+  const input = document.getElementById('ed-brand-input');
+  const display = document.getElementById('ed-brand-text');
+  const v = input?.value || '';
+  edState.brandText = v;
+  if(display) display.textContent = v;
+  const exportBrand = document.getElementById('export-brand-text');
+  if(exportBrand) exportBrand.textContent = v;
+  updateEditorPreviews();
+  updateEditorInfo();
+}
+
+/* EDITOR — update slogan */
+function edUpdateSlogan(){
+  const input = document.getElementById('ed-slogan-input');
+  const display = document.getElementById('ed-slogan-text');
+  const v = input?.value || '';
+  edState.slogan = v;
+  if(display) display.textContent = v;
+  const exportSlogan = document.getElementById('export-slogan-text');
+  if(exportSlogan) exportSlogan.textContent = v;
+  updateEditorPreviews();
+  updateEditorInfo();
+}
+
+/* EDITOR — update side panel previews */
+function updateEditorPreviews(){
+  const logo = window.currentLogo;
+  if(!logo) return;
+
+  ['ed-prev-light','ed-prev-dark'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const isDark = id.includes('dark');
+    el.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;height:100%">
+      <img src="${logo.thumbnailUrl}" style="max-width:80px;max-height:80px;object-fit:contain;filter:${edState.color==='#323843'||edState.color==='#1a1a2e'?'none':'sepia(1) saturate(3) hue-rotate('+hexToHue(edState.color)+'deg)'}" alt="">
+      <span style="font-size:11px;font-weight:700;font-family:${edState.font},sans-serif;color:${isDark?'#fff':edState.color};text-align:center;line-height:1.2">${edState.brandText||''}</span>
+      ${edState.slogan?`<span style="font-size:8px;font-family:${edState.font},sans-serif;color:${isDark?'#aaa':'#8A8A97'};text-align:center;letter-spacing:1px;text-transform:uppercase">${edState.slogan}</span>`:''}
+    </div>`;
   });
 }
 
-/* EXPORT — формат accordion */
+/* EDITOR — update info panel */
+function updateEditorInfo(logo){
+  const l = logo || window.currentLogo;
+  if(!l) return;
+  const ib = document.getElementById('ed-info-brand');
+  if(ib) ib.textContent = l.brandName || '';
+  const ii = document.getElementById('ed-info-industry');
+  if(ii) ii.textContent = l.industry || window._lastGenIndustry || '';
+  const is = document.getElementById('ed-info-style');
+  if(is) is.textContent = l.style || window._lastGenStyle || '';
+  const ic = document.getElementById('ed-info-color');
+  if(ic) ic.innerHTML = `<span style="width:12px;height:12px;border-radius:50%;background:${edState.color};display:inline-block"></span>${edState.color}`;
+  const isl = document.getElementById('ed-info-slogan');
+  if(isl) isl.textContent = edState.slogan || '—';
+}
+
+/* EXPORT preview sync */
+function updateExportPreview(){
+  const logo = window.currentLogo;
+  if(!logo) return;
+  const img = document.getElementById('export-logo-img');
+  if(img) img.src = logo.thumbnailUrl || '';
+  const brand = document.getElementById('export-brand-text');
+  if(brand){
+    brand.textContent = edState.brandText || logo.brandName || '';
+    brand.style.fontFamily = edState.font + ',sans-serif';
+    brand.style.color = edState.color;
+  }
+  const slogan = document.getElementById('export-slogan-text');
+  if(slogan){
+    slogan.textContent = edState.slogan || '';
+    slogan.style.fontFamily = edState.font + ',sans-serif';
+  }
+}
+
+/* DOWNLOAD imitation */
 function toggleFmt(bodyId,radioId){
   document.querySelectorAll('.fmt-body').forEach(b=>b.classList.remove('open'));
   const body=document.getElementById(bodyId);
