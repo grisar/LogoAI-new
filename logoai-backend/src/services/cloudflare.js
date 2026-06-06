@@ -119,15 +119,40 @@ export class CloudflareService {
     return basePrompt;
   }
 
+  async translateToEnglish(text) {
+    if (!text) return text;
+    const hasCyrillic = /[а-яА-ЯёЁ]/.test(text);
+    if (!hasCyrillic) return text;
+
+    try {
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.substring(0, 500))}&langpair=ru|en`;
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(tid);
+      const data = await res.json();
+      if (data.responseStatus === 200 && data.responseData?.translatedText) {
+        const translated = data.responseData.translatedText;
+        console.log(`Translated prompt: "${text.substring(0, 60)}..." → "${translated.substring(0, 60)}..."`);
+        return translated;
+      }
+    } catch (err) {
+      console.warn('Translation failed, using original prompt:', err.message);
+    }
+    return text;
+  }
+
   async generateVariations(params, count = 4) {
     console.log(`Generating ${count} variations for: ${params.brandName}`);
-    
+
+    const userPrompt = await this.translateToEnglish(params.prompt || '');
+
     const prompts = [];
 
     for (let i = 0; i < count; i++) {
       const variation = this.buildPrompt({
         ...params,
-        prompt: (params.prompt || '') + (i > 0 ? ` variation ${i + 1}` : '')
+        prompt: (userPrompt || '') + (i > 0 ? ` variation ${i + 1}` : '')
       });
       console.log(`Prompt ${i + 1}: ${variation.substring(0, 100)}...`);
       prompts.push(variation);
