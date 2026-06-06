@@ -2021,24 +2021,17 @@ async function renderExportCanvas(size,transparent){
 }
 
 /* EXPORT — build SVG string */
-function buildSVG(size,transparent){
+async function buildSVG(size,transparent){
   const logo=window.currentLogo;
   if(!logo) return null;
-  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
+  const canvas=await renderExportCanvas(size,transparent);
+  if(!canvas) return null;
+  const dataUrl=canvas.toDataURL('image/png');
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">\n`;
   if(!transparent){
-    svg+=`<rect width="${size}" height="${size}" fill="#ffffff"/>`;
+    svg+=`  <rect width="${size}" height="${size}" fill="#ffffff"/>\n`;
   }
-  svg+=`<image href="${logo.thumbnailUrl}" x="0" y="0" width="${size}" height="${size}" preserveAspectRatio="xMidYMid meet"/>`;
-  if(edState.brandText&&edState.brandText.trim()){
-    const fs=Math.round(size*0.07);
-    const y=size*0.85;
-    svg+=`<text x="${size/2}" y="${y}" text-anchor="middle" font-size="${fs}" font-weight="700" font-family="${edState.font},sans-serif" fill="${edState.color}">${edState.brandText}</text>`;
-  }
-  if(edState.slogan&&edState.slogan.trim()){
-    const fs=Math.round(size*0.035);
-    const y=size*0.92;
-    svg+=`<text x="${size/2}" y="${y}" text-anchor="middle" font-size="${fs}" font-family="${edState.font},sans-serif" fill="${edState.color}" letter-spacing="2">${edState.slogan.toUpperCase()}</text>`;
-  }
+  svg+=`  <image href="${dataUrl}" x="0" y="0" width="${size}" height="${size}"/>\n`;
   svg+=`</svg>`;
   return svg;
 }
@@ -2051,7 +2044,7 @@ async function downloadFile(){
   toast('Подготовка '+opts.fmt.toUpperCase()+'…');
   try{
     if(opts.fmt==='svg'){
-      const svgStr=buildSVG(opts.size,opts.transparent);
+      const svgStr=await buildSVG(opts.size,opts.transparent);
       if(!svgStr){toast('Ошибка формирования SVG');return}
       const blob=new Blob([svgStr],{type:'image/svg+xml'});
       triggerDownload(blob,filename+'.svg');
