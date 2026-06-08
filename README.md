@@ -699,4 +699,4 @@ curl http://localhost:3000/api/auth/login  # должен вернуть 401
 
 ## Лицензия
 
-MIT
+by Dariaaan and Gris4r
