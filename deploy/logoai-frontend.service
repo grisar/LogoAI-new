@@ -1,0 +1,19 @@
+[Unit]
+Description=LogoAI Frontend Server
+After=network.target logoai-backend.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/logoai-backend
+Environment="NODE_ENV=production"
+Environment="HOST=0.0.0.0"
+Environment="FRONTEND_PORT=8080"
+ExecStart=/usr/bin/node static-server.js
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

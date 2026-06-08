@@ -1,0 +1,19 @@
+[Unit]
+Description=LogoAI Backend Server
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/logoai-backend
+Environment="NODE_ENV=production"
+EnvironmentFile=/opt/logoai-backend/.env
+ExecStart=/usr/bin/node index.js
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
